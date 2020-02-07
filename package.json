@@ -3,9 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@material-ui/core": "^4.9.1",
+    "axios": "^0.19.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "react-scripts": "0.9.5"
+    "react-router-dom": "^5.1.2",
+    "react-scripts": "0.9.5",
+    "react-spotify-login": "^0.9.1",
+    "typeface-roboto": "0.0.75"
   },
   "devDependencies": {},
   "scripts": {
