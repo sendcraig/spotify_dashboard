@@ -11,7 +11,7 @@ const App = () => {
     const clientId = "664624fb8bb640fb8b69b4d3e6a18d12";
     const scopes = ["user-read-private", "user-read-currently-playing", "user-read-playback-state", "user-read-recently-played"];
     const responseType = "token";
-    const redirectUri = "http://localhost:3000";
+    const redirectUri = "http://localhost:7000";
 
     const [token, setToken] = useState(hash.access_token);
     const [currentlyPlaying, setCurrentlyPlaying] = useState('');
@@ -34,7 +34,7 @@ const App = () => {
     const getRecentlyPlayed = () => {
         spotifyApi.setAccessToken(token);
         spotifyApi.getMyRecentlyPlayedTracks({
-            after: Date.now() - 3600000
+            after: Date.now() - (3600000 * 24)
         })
             .then(res => {
                 console.log(`recently played (${res.items.length})`, res.items);
@@ -80,7 +80,9 @@ const App = () => {
                               {recentlyPlayed.length > 0 && (
                                   <Grid>
                                       <h4>Recently played:</h4>
-                                      {recentlyPlayed.forEach(item => <SongTitle song={item.track}/>)}
+                                      {recentlyPlayed.map(item => (
+                                          <p>{item.track.name} by {item.track.artists[0].name}</p>
+                                      ))}
                                   </Grid>
                               )}
                           </Grid>
