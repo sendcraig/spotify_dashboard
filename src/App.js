@@ -1,34 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import './App.css';
 import { Button, Container, Grid } from '@material-ui/core';
-import { hash } from './spotify/authenicate';
 import SpotifyWebApi from 'spotify-web-api-js';
 import SongTitle from './components/SongTitle';
+import {
+  AuthenticationContext,
+  AuthenticationProvider,
+} from './context/Authentication';
 
 const App = () => {
-  const authorizationEndpoint = 'https://accounts.spotify.com/authorize';
-  const clientId = '664624fb8bb640fb8b69b4d3e6a18d12';
-  const scopes = [
-    'user-read-private',
-    'user-read-currently-playing',
-    'user-read-playback-state',
-    'user-read-recently-played',
-  ];
-  const responseType = 'token';
-  const redirectUri = 'http://localhost:7000';
-
-  const token = hash.access_token;
+  const { token, getAuthUrl } = useContext(AuthenticationContext);
 
   const [currentlyPlaying, setCurrentlyPlaying] = useState('');
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
 
   const spotifyApi = new SpotifyWebApi();
-
-  const getAuthUrl = () => {
-    return `${authorizationEndpoint}?client_id=${clientId}&response_type=${responseType}&scope=${scopes.join(
-      '%20'
-    )}&redirect_uri=${redirectUri}`;
-  };
 
   const getCurrentlyPlaying = () => {
     spotifyApi.setAccessToken(token);
@@ -105,4 +91,10 @@ const App = () => {
   );
 };
 
-export default App;
+const AppConsumer = props => (
+  <AuthenticationProvider>
+    <App {...props} />
+  </AuthenticationProvider>
+);
+
+export default AppConsumer;
