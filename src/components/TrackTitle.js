@@ -14,11 +14,11 @@ const TrackTitle = ({ title, artist, imageUrl }) => {
         alignItems="center"
         style={{ padding: '3px' }}
       >
-        <Grid item alignContent="flex-start">
+        <Grid item>
           <h4>{title}</h4>
           <p>{artist}</p>
         </Grid>
-        <Grid item alignContent="flex-end">
+        <Grid item>
           <img src={imageUrl} style={{ maxWidth: '50px' }} />
         </Grid>
       </Grid>

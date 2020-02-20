@@ -7,9 +7,9 @@ import {
 } from './context/Authentication';
 import Login from './components/Login';
 import {
-  batchGetTracks,
   getCurrentlyPlayingTrack,
   getMe,
+  getTracks,
 } from './spotify/spotifyApi';
 import TrackTitle from './components/TrackTitle';
 import FormControl from '@material-ui/core/FormControl';
@@ -50,16 +50,16 @@ const App = () => {
     )
       .then(res => res.json())
       .then(data => {
-        console.log('success! :)', data);
+        console.log('Successfully called AWS for play history ', data);
 
         const trackIds = data.map(entry => entry.track_id);
-        batchGetTracks(token, mapRecentlyPlayedTracks, trackIds);
+        getTracks(token, trackIds, mapRecentlyPlayedTracks);
+
         const sortedData = orderBy(data, 'played_at', 'desc');
-        console.log('sorted tracks', sortedData);
         setRecentlyPlayed(sortedData);
       })
       .catch(err => {
-        console.log('failed! :(', err);
+        console.log('Error calling AWS', err);
       });
   };
 
@@ -132,7 +132,7 @@ const App = () => {
                   <h4>Recently played:</h4>
                   {recentlyPlayed.map(track => (
                     <Grid item style={{ width: '100%' }}>
-                      <p>{new Date(track.played_at).toISOString()}</p>
+                      <p>{new Date(track.played_at).toLocaleString('en-US')}</p>
                       <TrackTitle
                         title={trackMap[track.track_id].name}
                         artist={trackMap[track.track_id].artists[0].name}
