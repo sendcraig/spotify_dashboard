@@ -44,3 +44,17 @@ export const getRecentlyPlayedTracks = (token, callback, numHours) => {
       console.log('error fetching recently played tracks', err);
     });
 };
+
+// TODO - pagination
+export const batchGetTracks = (token, callback, trackIds) => {
+  spotifyApi.setAccessToken(token);
+  spotifyApi
+    .getTracks(trackIds)
+    .then(res => {
+      console.log(`got ${trackIds.length} tracks from Spotify API`, res);
+      callback(res.tracks);
+    })
+    .catch(err => {
+      console.log('error fetching tracks', err);
+    });
+};

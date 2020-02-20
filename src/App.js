@@ -7,14 +7,15 @@ import {
 } from './context/Authentication';
 import Login from './components/Login';
 import {
+  batchGetTracks,
   getCurrentlyPlayingTrack,
   getMe,
-  getRecentlyPlayedTracks,
 } from './spotify/spotifyApi';
 import TrackTitle from './components/TrackTitle';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
+import { orderBy } from 'lodash/collection';
 
 const App = () => {
   const { token, getAuthUrl } = useContext(AuthenticationContext);
@@ -23,6 +24,8 @@ const App = () => {
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [currentUser, setCurrentUser] = useState({});
   const [timeRange, setTimeRange] = useState('2');
+  const [trackMap, setTrackMap] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -39,8 +42,36 @@ const App = () => {
   };
 
   const fetchRecentlyPlayed = () => {
-    console.log('time range', timeRange);
-    getRecentlyPlayedTracks(token, setRecentlyPlayed, timeRange);
+    const afterTimestamp = Date.now() - parseInt(timeRange) * 3600000;
+    // TODO - use axios, extract to API client file
+    setIsLoading(true);
+    fetch(
+      `https://3nijghj1c7.execute-api.eu-central-1.amazonaws.com/prod/?after_timestamp=${afterTimestamp}`
+    )
+      .then(res => res.json())
+      .then(data => {
+        console.log('success! :)', data);
+
+        const trackIds = data.map(entry => entry.track_id);
+        batchGetTracks(token, mapRecentlyPlayedTracks, trackIds);
+        const sortedData = orderBy(data, 'played_at', 'desc');
+        console.log('sorted tracks', sortedData);
+        setRecentlyPlayed(sortedData);
+      })
+      .catch(err => {
+        console.log('failed! :(', err);
+      });
+  };
+
+  const mapRecentlyPlayedTracks = tracks => {
+    const recentlyPlayedMap = tracks.reduce((map, obj) => {
+      map[obj.id] = obj;
+      return map;
+    }, {});
+
+    // TODO - cache this or something (don't just store in memory)
+    setTrackMap({ ...trackMap, ...recentlyPlayedMap });
+    setIsLoading(false);
   };
 
   return (
@@ -96,15 +127,16 @@ const App = () => {
                 Get recently played tracks
               </Button>
 
-              {recentlyPlayed.length > 0 && (
+              {!isLoading && (
                 <Grid container spacing={2}>
                   <h4>Recently played:</h4>
-                  {recentlyPlayed.map(item => (
+                  {recentlyPlayed.map(track => (
                     <Grid item style={{ width: '100%' }}>
+                      <p>{new Date(track.played_at).toISOString()}</p>
                       <TrackTitle
-                        title={item.track.name}
-                        artist={item.track.artists[0].name}
-                        imageUrl={item.track.album.images[0].url}
+                        title={trackMap[track.track_id].name}
+                        artist={trackMap[track.track_id].artists[0].name}
+                        imageUrl={trackMap[track.track_id].album.images[0].url}
                       />
                     </Grid>
                   ))}
