@@ -15,7 +15,8 @@ import TrackTitle from './components/TrackTitle';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
-import { orderBy } from 'lodash/collection';
+import { groupBy, orderBy } from 'lodash/collection';
+import BarGraph from './components/BarGraph';
 
 const App = () => {
   const { token, getAuthUrl } = useContext(AuthenticationContext);
@@ -26,16 +27,13 @@ const App = () => {
   const [timeRange, setTimeRange] = useState('2');
   const [trackMap, setTrackMap] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [graphData, setGraphData] = useState([]);
 
   useEffect(() => {
     if (token) {
-      fetchCurrentUser();
+      getMe(token, setCurrentUser);
     }
   }, [token]);
-
-  const fetchCurrentUser = () => {
-    getMe(token, setCurrentUser);
-  };
 
   const fetchCurrentlyPlaying = () => {
     getCurrentlyPlayingTrack(token, setCurrentlyPlaying);
@@ -45,6 +43,7 @@ const App = () => {
     const afterTimestamp = Date.now() - parseInt(timeRange) * 3600000;
     // TODO - use axios, extract to API client file
     setIsLoading(true);
+
     fetch(
       `https://3nijghj1c7.execute-api.eu-central-1.amazonaws.com/prod/?after_timestamp=${afterTimestamp}`
     )
@@ -74,6 +73,25 @@ const App = () => {
     setIsLoading(false);
   };
 
+  useEffect(() => {
+    const tracksByHour = groupBy(recentlyPlayed, track =>
+      new Date(track.played_at).getHours()
+    );
+    console.log('tracks by hour', tracksByHour);
+    const data = Object.keys(tracksByHour).map(hour => {
+      return {
+        hour: parseInt(hour),
+        totalMinutes: tracksByHour[hour].reduce(
+          (a, b) => (a += trackMap[b.track_id].duration_ms / 60000),
+          0
+        ),
+      };
+    });
+
+    console.log('graph data', data);
+    setGraphData(data);
+  }, [trackMap]);
+
   return (
     <Container fixed>
       <Grid container spacing={2} justify="center">
@@ -86,6 +104,9 @@ const App = () => {
           )}
           {Object.keys(currentUser).length > 0 && (
             <h2>Welcome {currentUser.display_name}!</h2>
+          )}
+          {token && graphData.length > 0 && (
+            <BarGraph data={graphData} xAxis="hour" yAxis="totalMinutes" />
           )}
         </Grid>
         <Grid item xs={6}>
