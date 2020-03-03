@@ -28,6 +28,7 @@ const App = () => {
   const [trackMap, setTrackMap] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [graphData, setGraphData] = useState([]);
+  const [stackedGraphData, setStackedGraphData] = useState([]);
 
   useEffect(() => {
     if (token) {
@@ -73,12 +74,13 @@ const App = () => {
     setIsLoading(false);
   };
 
-  useEffect(() => {
+  const getTracksByHour = () => {
     const tracksByHour = groupBy(recentlyPlayed, track =>
       new Date(track.played_at).getHours()
     );
+
     console.log('tracks by hour', tracksByHour);
-    const data = Object.keys(tracksByHour).map(hour => {
+    return Object.keys(tracksByHour).map(hour => {
       return {
         hour: parseInt(hour),
         totalMinutes: tracksByHour[hour].reduce(
@@ -87,9 +89,42 @@ const App = () => {
         ),
       };
     });
+  };
 
-    console.log('graph data', data);
-    setGraphData(data);
+  const getTracksByDayByHour = () => {
+    const tracksByDay = groupBy(recentlyPlayed, track =>
+      new Date(track.played_at).getDay()
+    );
+
+    console.log('tracks by day', tracksByDay);
+    const tracksByDayByHour = Object.keys(tracksByDay).map(day => {
+      return {
+        day: day,
+        tracksByHour: groupBy(tracksByDay[day], track =>
+          new Date(track.played_at).getHours()
+        ),
+      };
+    });
+
+    tracksByDayByHour.forEach(dayObj => {
+      dayObj.tracksByHour = Object.keys(dayObj.tracksByHour).map(hour => {
+        return {
+          hour: parseInt(hour),
+          totalMinutes: dayObj.tracksByHour[hour].reduce(
+            (a, b) => (a += trackMap[b.track_id].duration_ms / 60000),
+            0
+          ),
+        };
+      });
+    });
+
+    console.log('tracks by day by hour', tracksByDayByHour);
+    return tracksByDayByHour;
+  };
+
+  useEffect(() => {
+    setGraphData(getTracksByHour());
+    setStackedGraphData(getTracksByDayByHour());
   }, [trackMap]);
 
   return (
@@ -105,10 +140,28 @@ const App = () => {
           {Object.keys(currentUser).length > 0 && (
             <h2>Welcome {currentUser.display_name}!</h2>
           )}
-          {token && graphData.length > 0 && (
-            <BarGraph data={graphData} xAxis="hour" yAxis="totalMinutes" />
-          )}
         </Grid>
+        {token && graphData.length > 0 && (
+          <Grid item xs={12}>
+            <BarGraph
+              data={graphData}
+              xAxis="hour"
+              yAxis="totalMinutes"
+              isStacked={false}
+            />
+          </Grid>
+        )}
+        {token && stackedGraphData.length > 0 && (
+          <Grid item xs={12}>
+            <BarGraph
+              data={stackedGraphData}
+              xAxis="hour"
+              yAxis="totalMinutes"
+              isStacked={true}
+            />
+          </Grid>
+        )}
+
         <Grid item xs={6}>
           {token && (
             <Grid item>

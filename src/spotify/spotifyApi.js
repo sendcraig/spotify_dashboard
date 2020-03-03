@@ -2,6 +2,7 @@ import SpotifyWebApi from 'spotify-web-api-js';
 import axios from 'axios';
 import { chunk } from 'lodash/array';
 
+// TODO - skip using this library
 const spotifyApi = new SpotifyWebApi();
 
 export const getMe = (token, callback) => {
@@ -28,6 +29,14 @@ export const getCurrentlyPlayingTrack = (token, callback) => {
     });
 };
 
+/**
+ * Get batch of tracks from Spotify API.
+ * Method is exhaustive and uses pagination to make as many requests as
+ * necessary.
+ * @param token
+ * @param trackIds
+ * @param resolve
+ */
 export const getTracks = (token, trackIds, resolve) => {
   const makeRequest = (token, trackIdChunks, retrievedTracks, resolve) => {
     axios
@@ -50,6 +59,7 @@ export const getTracks = (token, trackIds, resolve) => {
       });
   };
 
+  // Spotify limits batch calls to 50 tracks at a time
   const chunks = chunk(trackIds, 50);
   makeRequest(token, chunks, [], resolve);
 };
