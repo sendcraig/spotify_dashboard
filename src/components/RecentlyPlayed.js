@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { Button, Grid } from '@material-ui/core';
-import { orderBy } from 'lodash/collection';
+import { groupBy, orderBy } from 'lodash/collection';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
 import { useCookies } from 'react-cookie';
 import { getTracks } from '../spotify/spotifyApi';
-import ListeningHistoryGraph from './ListeningHistoryGraph';
 import TrackList from './TrackList';
+import Typography from '@material-ui/core/Typography';
+import AlbumsList from './AlbumsList';
+import ArtistsList from './ArtistsList';
 
 const RecentlyPlayed = () => {
   const [cookies] = useCookies(['logged_in']);
 
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
+  const [topArtists, setTopArtists] = useState([]);
+  const [topAlbums, setTopAlbums] = useState([]);
   const [timeRange, setTimeRange] = useState('2');
   const [trackMap, setTrackMap] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -32,11 +36,18 @@ const RecentlyPlayed = () => {
         setRecentlyPlayed(orderBy(data, 'played_at', 'desc'));
 
         // Get tracks from Spotify API
-        getTracks(cookies.access_token, trackIds, mapRecentlyPlayedTracks);
+        getTracks(cookies.access_token, trackIds, handleTrackResponse);
       })
       .catch(err => {
         console.log('Error calling AWS', err);
       });
+  };
+
+  const handleTrackResponse = tracks => {
+    mapRecentlyPlayedTracks(tracks);
+    getTopArtists(tracks);
+    getTopAlbums(tracks);
+    setIsLoading(false);
   };
 
   const mapRecentlyPlayedTracks = tracks => {
@@ -47,7 +58,29 @@ const RecentlyPlayed = () => {
 
     // TODO - cache this or something (don't just store in memory)
     setTrackMap({ ...trackMap, ...recentlyPlayedMap });
-    setIsLoading(false);
+  };
+
+  const getTopArtists = tracks => {
+    const tracksByArtist = groupBy(tracks, track => track.artists[0].name);
+    console.log('tracks by artist', tracksByArtist);
+    const artists = Object.keys(tracksByArtist).sort((a, b) => {
+      return tracksByArtist[b].length - tracksByArtist[a].length;
+    });
+    console.log('top artists', artists);
+    setTopArtists(artists);
+  };
+
+  const getTopAlbums = tracks => {
+    const tracksByAlbum = groupBy(tracks, track => track.album.name);
+    console.log('tracks by album', tracksByAlbum);
+    let albums = Object.keys(tracksByAlbum).sort((a, b) => {
+      return tracksByAlbum[b].length - tracksByAlbum[a].length;
+    });
+    albums = albums.map(album => {
+      return tracksByAlbum[album][0].album;
+    });
+    console.log('top albums', albums);
+    setTopAlbums(albums);
   };
 
   return (
@@ -71,14 +104,29 @@ const RecentlyPlayed = () => {
       {!isLoading && (
         <>
           <Grid item xs={3}>
+            <Typography variant="h6">Recently Played Tracks</Typography>
             <TrackList trackMap={trackMap} tracks={recentlyPlayed} />
           </Grid>
-          <Grid item xs={9}>
-            <ListeningHistoryGraph
-              recentlyPlayed={recentlyPlayed}
-              trackMap={trackMap}
-            />
+          <Grid item xs={3}>
+            <Typography variant="h6">Top Artists</Typography>
+            <ArtistsList artists={topArtists} limit={10} />
           </Grid>
+          <Grid item xs={3}>
+            <Typography variant="h6">Top Albums</Typography>
+            <AlbumsList albums={topAlbums} limit={10} />
+          </Grid>
+          <Grid item xs={3}>
+            <Typography variant="h6">Top Genres</Typography>
+            <Typography variant="body1">To-do...</Typography>
+          </Grid>
+
+          {/*TODO - not sold on Victory... look into other alternatives*/}
+          {/*<Grid item xs={9}>*/}
+          {/*  <ListeningHistoryGraph*/}
+          {/*    recentlyPlayed={recentlyPlayed}*/}
+          {/*    trackMap={trackMap}*/}
+          {/*  />*/}
+          {/*</Grid>*/}
         </>
       )}
     </Grid>
