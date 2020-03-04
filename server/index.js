@@ -5,7 +5,7 @@ const cors = require('cors');
 const querystring = require('querystring');
 const array = require('lodash/array');
 
-var stateKey = 'spotify_auth_state';
+let stateKey = 'spotify_auth_state';
 
 const server = express();
 
@@ -59,10 +59,8 @@ server.get('/login', function(req, res) {
 });
 
 server.get('/callback', function(req, res) {
-  console.log('callback');
   // your application requests refresh and access tokens
   // after checking the state parameter
-
   const code = req.query.code || null;
   const state = req.query.state || null;
   const storedState = req.cookies ? req.cookies[stateKey] : null;
@@ -158,6 +156,10 @@ server.get('/refresh_token', function(req, res) {
 // SPOTIFY API METHODS
 // ==========================================
 
+/**
+ * Get current user's profile
+ * https://developer.spotify.com/documentation/web-api/reference/users-profile/get-current-users-profile/
+ */
 server.get('/me', (req, res) => {
   // TODO - error handling when no access token provided
   const access_token = req.headers.access_token;
@@ -172,7 +174,11 @@ server.get('/me', (req, res) => {
   });
 });
 
-server.get('/recently_played', (req, res) => {
+/**
+ * Get batch of tracks by IDs
+ * https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-tracks/
+ */
+server.get('/tracks', (req, res) => {
   const makeRequest = (token, trackIdChunks, retrievedTracks) => {
     const options = {
       url: `https://api.spotify.com/v1/tracks/?ids=${trackIdChunks

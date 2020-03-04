@@ -1,31 +1,21 @@
-import SpotifyWebApi from 'spotify-web-api-js';
 import axios from 'axios';
-import { chunk } from 'lodash/array';
+import * as qs from 'qs';
 
-// TODO - skip using this library
-const spotifyApi = new SpotifyWebApi();
-
+/**
+ * Gets current user's profile from Spotify API.
+ * @param token
+ * @param callback
+ */
 export const getMe = (token, callback) => {
-  spotifyApi.setAccessToken(token);
-  spotifyApi
-    .getMe()
-    .then(res => {
-      callback(res);
+  axios
+    .get('http://localhost:7000/me', {
+      headers: {
+        access_token: token,
+      },
     })
-    .catch(err => {
-      console.log('error fetching current user', err);
-    });
-};
-
-export const getCurrentlyPlayingTrack = (token, callback) => {
-  spotifyApi.setAccessToken(token);
-  spotifyApi
-    .getMyCurrentPlayingTrack()
-    .then(res => {
-      callback(res);
-    })
-    .catch(err => {
-      console.log('error fetching currently playing track', err);
+    .then(response => {
+      console.log('successfully got me from Spotify!', response);
+      callback(response.data);
     });
 };
 
@@ -35,31 +25,23 @@ export const getCurrentlyPlayingTrack = (token, callback) => {
  * necessary.
  * @param token
  * @param trackIds
- * @param resolve
+ * @param callback
  */
-export const getTracks = (token, trackIds, resolve) => {
-  const makeRequest = (token, trackIdChunks, retrievedTracks, resolve) => {
-    axios
-      .get('https://api.spotify.com/v1/tracks/', {
-        params: { ids: trackIdChunks.shift().join(',') },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then(response => {
-        const allTracks = retrievedTracks.concat(response.data.tracks);
-        if (trackIdChunks.length > 0) {
-          makeRequest(token, trackIdChunks, allTracks, resolve);
-        } else {
-          resolve(allTracks);
-        }
-      })
-      .catch(error => {
-        console.log('error!', error);
-      });
-  };
-
-  // Spotify limits batch calls to 50 tracks at a time
-  const chunks = chunk(trackIds, 50);
-  makeRequest(token, chunks, [], resolve);
+export const getTracks = (token, trackIds, callback) => {
+  axios
+    .get('http://localhost:7000/tracks', {
+      headers: {
+        access_token: token,
+      },
+      params: {
+        trackIds: trackIds,
+      },
+      paramsSerializer: params => {
+        return qs.stringify(params, { arrayFormat: 'brackets' });
+      },
+    })
+    .then(response => {
+      console.log('successfully got tracks from Spotify!', response);
+      callback(response.data);
+    });
 };
