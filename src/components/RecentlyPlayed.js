@@ -104,7 +104,9 @@ const RecentlyPlayed = () => {
       {!isLoading && (
         <>
           <Grid item xs={3}>
-            <Typography variant="h6">Recently Played Tracks</Typography>
+            <Typography variant="h6">
+              Recently Played Tracks ({recentlyPlayed.length})
+            </Typography>
             <TrackList trackMap={trackMap} tracks={recentlyPlayed} />
           </Grid>
           <Grid item xs={3}>

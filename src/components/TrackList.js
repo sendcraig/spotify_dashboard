@@ -16,7 +16,10 @@ const TrackList = ({ tracks = [], trackMap, limit }) => {
         <>
           <ListItem>
             <ListItemAvatar>
-              <Avatar src={trackMap[track.track_id].album.images[0].url} />
+              <Avatar
+                src={trackMap[track.track_id].album.images[0].url}
+                variant="square"
+              />
             </ListItemAvatar>
             <ListItemText
               primary={trackMap[track.track_id].name}

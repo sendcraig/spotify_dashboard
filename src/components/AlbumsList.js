@@ -16,7 +16,7 @@ const AlbumsList = ({ albums = [], limit }) => {
         <>
           <ListItem>
             <ListItemAvatar>
-              <Avatar src={album.images[0].url} />
+              <Avatar src={album.images[0].url} variant="square" />
             </ListItemAvatar>
             <ListItemText
               primary={album.name}

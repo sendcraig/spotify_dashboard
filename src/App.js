@@ -21,10 +21,10 @@ const App = () => {
     <Container>
       <Grid container spacing={3} justify="center">
         {!cookies.logged_in ? (
-          <>
+          <Grid item xs={12}>
             <Typography variant="p">User is not logged in</Typography>
             <Button href="http://localhost:7000/login">Click to log in</Button>
-          </>
+          </Grid>
         ) : (
           <>
             <Grid item xs={12}>
