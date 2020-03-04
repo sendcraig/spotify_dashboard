@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { chunk } from 'lodash/array';
 import * as qs from 'qs';
 
 /**
@@ -28,20 +29,35 @@ export const getMe = (token, callback) => {
  * @param callback
  */
 export const getTracks = (token, trackIds, callback) => {
-  axios
-    .get('http://localhost:7000/tracks', {
-      headers: {
-        access_token: token,
-      },
-      params: {
-        trackIds: trackIds,
-      },
-      paramsSerializer: params => {
-        return qs.stringify(params, { arrayFormat: 'brackets' });
-      },
-    })
-    .then(response => {
-      console.log('successfully got tracks from Spotify!', response);
-      callback(response.data);
-    });
+  const makeRequest = (token, trackIdChunks, retrievedTracks) => {
+    axios
+      .get('http://localhost:7000/tracks', {
+        headers: {
+          access_token: token,
+        },
+        params: {
+          trackIds: trackIdChunks.shift(),
+        },
+        paramsSerializer: params => {
+          return qs.stringify(params, { arrayFormat: 'brackets' });
+        },
+      })
+      .then(response => {
+        console.log('successfully got tracks from backend!', response);
+
+        const allTracks = retrievedTracks.concat(response.data);
+
+        // Recursive loop for pagination
+        if (trackIdChunks.length > 0) {
+          makeRequest(token, trackIdChunks, allTracks);
+        } else {
+          console.log('returning ', allTracks);
+          callback(allTracks);
+        }
+      });
+  };
+
+  // Spotify limits batch calls to 50 tracks at a time
+  const chunks = chunk(trackIds, 50);
+  makeRequest(token, chunks, []);
 };

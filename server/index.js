@@ -3,7 +3,6 @@ const request = require('request');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const querystring = require('querystring');
-const array = require('lodash/array');
 
 let stateKey = 'spotify_auth_state';
 
@@ -179,38 +178,23 @@ server.get('/me', (req, res) => {
  * https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-tracks/
  */
 server.get('/tracks', (req, res) => {
-  const makeRequest = (token, trackIdChunks, retrievedTracks) => {
-    const options = {
-      url: `https://api.spotify.com/v1/tracks/?ids=${trackIdChunks
-        .shift()
-        .join(',')}`,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      json: true,
-    };
+  const access_token = req.headers.access_token;
+  const trackIds = req.query.trackIds;
 
-    // Make request to Spotify
-    request.get(options, function(error, response, body) {
-      if (error) {
-        console.log('error getting tracks', error);
-      }
-
-      const allTracks = retrievedTracks.concat(body.tracks);
-
-      // Recursive loop for pagination
-      if (trackIdChunks.length > 0) {
-        makeRequest(token, trackIdChunks, allTracks);
-      } else {
-        res.json(allTracks);
-      }
-    });
+  const options = {
+    url: `https://api.spotify.com/v1/tracks/?ids=${trackIds}`,
+    headers: { Authorization: 'Bearer ' + access_token },
+    json: true,
   };
 
-  // Spotify limits batch calls to 50 tracks at a time
-  const chunks = array.chunk(req.query.trackIds, 50);
-  const access_token = req.headers.access_token;
-  makeRequest(access_token, chunks, []);
+  // Make request to Spotify
+  request.get(options, function(error, response, body) {
+    if (error) {
+      console.log('error getting tracks', error);
+    }
+
+    res.json(body.tracks);
+  });
 });
 
 //set port and log to the console

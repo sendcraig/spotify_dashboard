@@ -51,7 +51,7 @@ const RecentlyPlayed = () => {
   };
 
   return (
-    <Grid container>
+    <Grid container spacing={3}>
       <Grid item xs={12}>
         <FormControl>
           {/*TODO - change time range to slider or select*/}
