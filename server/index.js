@@ -3,6 +3,7 @@ const request = require('request');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const querystring = require('querystring');
+const cache = require('memory-cache');
 
 let stateKey = 'spotify_auth_state';
 
@@ -174,27 +175,43 @@ server.get('/me', (req, res) => {
 });
 
 /**
- * Get batch of tracks by IDs
+ * Get batch of tracks by IDs. Tracks are cached in memory by ID.
  * https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-tracks/
  */
 server.get('/tracks', (req, res) => {
-  const access_token = req.headers.access_token;
   const trackIds = req.query.trackIds;
+  let cachedTracks = [];
+  let nonCachedTracks = [];
 
-  const options = {
-    url: `https://api.spotify.com/v1/tracks/?ids=${trackIds}`,
-    headers: { Authorization: 'Bearer ' + access_token },
-    json: true,
-  };
-
-  // Make request to Spotify
-  request.get(options, function(error, response, body) {
-    if (error) {
-      console.log('error getting tracks', error);
+  // Check if tracks are cached
+  trackIds.forEach(trackId => {
+    if (cache.get(trackId)) {
+      cachedTracks.push(cache.get(trackId));
+    } else {
+      nonCachedTracks.push(trackId);
     }
-
-    res.json(body.tracks);
   });
+
+  if (nonCachedTracks.length > 0) {
+    const access_token = req.headers.access_token;
+    const options = {
+      url: `https://api.spotify.com/v1/tracks/?ids=${nonCachedTracks}`,
+      headers: { Authorization: 'Bearer ' + access_token },
+      json: true,
+    };
+
+    // Make request to Spotify
+    request.get(options, function(error, response, body) {
+      if (error) {
+        console.log('error getting tracks', error);
+      }
+
+      body.tracks.forEach(track => cache.put(track.id, track));
+      res.json(body.tracks.concat(cachedTracks));
+    });
+  } else {
+    res.json(cachedTracks);
+  }
 });
 
 //set port and log to the console
