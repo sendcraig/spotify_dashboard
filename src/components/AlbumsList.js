@@ -11,7 +11,7 @@ const AlbumsList = ({ albums = [], limit }) => {
   const albumsToList = limit ? albums.slice(0, limit) : albums;
 
   return (
-    <List style={{ width: '100%', maxHeight: '500px', overflow: 'auto' }}>
+    <List style={{ width: '100%', maxHeight: '600px', overflow: 'auto' }}>
       {albumsToList.map(album => (
         <>
           <ListItem>
