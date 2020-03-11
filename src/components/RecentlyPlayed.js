@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Button, Grid } from '@material-ui/core';
 import { groupBy } from 'lodash/collection';
 import FormControl from '@material-ui/core/FormControl';
@@ -13,6 +13,7 @@ import {
   TrackHistoryContext,
   TrackHistoryProvider,
 } from '../context/TrackHistory';
+import { isEmpty } from 'lodash/lang';
 
 const RecentlyPlayed = () => {
   const { trackMap, getTrackHistory } = useContext(TrackHistoryContext);
@@ -23,7 +24,11 @@ const RecentlyPlayed = () => {
 
   const [timeRange, setTimeRange] = useState('5');
   const [timeScale, setTimeScale] = useState('hour');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    isEmpty(trackMap) ? setIsLoading(true) : setIsLoading(false);
+  }, [trackMap]);
 
   const getTimestampMultiplier = () => {
     switch (timeScale) {
@@ -39,23 +44,19 @@ const RecentlyPlayed = () => {
   };
 
   const fetchRecentlyPlayed = () => {
-    const afterTimestamp =
-      Date.now() - parseInt(timeRange) * getTimestampMultiplier();
-
     setIsLoading(true);
 
+    const afterTimestamp =
+      Date.now() - parseInt(timeRange) * getTimestampMultiplier();
     const trackHistoryForTimeRange = getTrackHistory(afterTimestamp);
+
     const tracksToUse = trackHistoryForTimeRange.map(
       track => trackMap[track.track_id]
     );
+    getTopSongs(tracksToUse);
+    getTopArtists(tracksToUse);
+    getTopAlbums(tracksToUse);
 
-    handleTrackResponse(tracksToUse);
-  };
-
-  const handleTrackResponse = tracks => {
-    getTopSongs(tracks);
-    getTopArtists(tracks);
-    getTopAlbums(tracks);
     setIsLoading(false);
   };
 
@@ -121,7 +122,11 @@ const RecentlyPlayed = () => {
         </Button>
       </Grid>
 
-      {!isLoading && (
+      {isLoading ? (
+        <Grid item xs={12} alignItems="center">
+          <Typography variant="h5">Loading play history... 🎶</Typography>
+        </Grid>
+      ) : (
         <>
           <Grid item xs={3}>
             <Typography variant="h6">Top Tracks</Typography>
