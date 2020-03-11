@@ -1,18 +1,29 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { useCookies } from 'react-cookie';
 
 const AuthenticationContext = createContext({});
 
 const AuthenticationProvider = props => {
-  const [token, setToken] = useState(
-    window.localStorage.getItem('access_token')
-  );
+  const [cookies] = useCookies(['logged_in']);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    if (cookies.logged_in) {
+      console.log('user is logged in', cookies);
+      setIsLoggedIn(true);
+    } else {
+      console.log('user is NOT logged in', cookies);
+      setIsLoggedIn(false);
+      window.location.href = 'http://localhost:7000/login';
+    }
+  }, [cookies]);
 
   return (
     <AuthenticationContext.Provider
       value={{
-        token,
-        setToken,
+        isLoggedIn,
+        setIsLoggedIn,
       }}
     >
       {props.children}

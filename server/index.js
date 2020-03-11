@@ -59,7 +59,7 @@ server.get('/login', function(req, res) {
 });
 
 server.get('/callback', function(req, res) {
-  // your application requests refresh and access tokens
+  // your application requests access token
   // after checking the state parameter
   const code = req.query.code || null;
   const state = req.query.state || null;
@@ -68,7 +68,7 @@ server.get('/callback', function(req, res) {
   if (state === null || state !== storedState) {
     res.cookie('logged_in', false);
     res.redirect(
-      '/#' +
+      `${HOMEPAGE_REDIRECT}#` +
         querystring.stringify({
           error: 'state_mismatch',
         })
@@ -95,19 +95,21 @@ server.get('/callback', function(req, res) {
       function(error, response, body) {
         if (!error && response.statusCode === 200) {
           const access_token = body.access_token,
-            refresh_token = body.refresh_token;
+            expires_in = body.expires_in;
 
-          // Set cookies with authentication info
-          res.cookie('access_token', access_token);
-          res.cookie('refresh_token', refresh_token);
-          res.cookie('logged_in', true);
+          // Set logged in cookie for frontend
+          res.cookie('logged_in', true, {
+            expires: new Date(Date.now() + expires_in * 1000),
+          });
+
+          cache.put('access_token', access_token, expires_in * 1000);
 
           // Redirect to home page if user is logged in
           res.redirect(HOMEPAGE_REDIRECT);
         } else {
           res.cookie('logged_in', false);
           res.redirect(
-            '/#' +
+            `${HOMEPAGE_REDIRECT}#` +
               querystring.stringify({
                 error: 'invalid_token',
               })
@@ -117,39 +119,6 @@ server.get('/callback', function(req, res) {
       authOptions
     );
   }
-});
-
-// TODO - automate token refreshing (use expiresAt timestamp)
-server.get('/refresh_token', function(req, res) {
-  // requesting access token from refresh token
-  const refresh_token = req.query.refresh_token;
-  res.cookie('refresh_token', refresh_token);
-
-  const authOptions = {
-    url: 'https://accounts.spotify.com/api/token',
-    headers: {
-      Authorization:
-        'Basic ' +
-        new Buffer(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64'),
-    },
-    form: {
-      grant_type: 'refresh_token',
-      refresh_token: refresh_token,
-    },
-    json: true,
-  };
-
-  request.post(authOptions, function(error, response, body) {
-    if (!error && response.statusCode === 200) {
-      const access_token = body.access_token;
-      res.cookie('access_token', access_token);
-      res.cookie('logged_in', true);
-
-      res.send({
-        access_token: access_token,
-      });
-    }
-  });
 });
 
 // ==========================================
@@ -162,7 +131,7 @@ server.get('/refresh_token', function(req, res) {
  */
 server.get('/me', (req, res) => {
   // TODO - error handling when no access token provided
-  const access_token = req.headers.access_token;
+  const access_token = cache.get('access_token');
   const options = {
     url: 'https://api.spotify.com/v1/me',
     headers: { Authorization: 'Bearer ' + access_token },
@@ -193,7 +162,7 @@ server.get('/tracks', (req, res) => {
   });
 
   if (nonCachedTracks.length > 0) {
-    const access_token = req.headers.access_token;
+    const access_token = cache.get('access_token');
     const options = {
       url: `https://api.spotify.com/v1/tracks/?ids=${nonCachedTracks}`,
       headers: { Authorization: 'Bearer ' + access_token },

@@ -4,7 +4,6 @@ import { groupBy } from 'lodash/collection';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
-import { useCookies } from 'react-cookie';
 import { getTracks } from '../spotify/spotifyApi';
 import TrackList from './TrackList';
 import Typography from '@material-ui/core/Typography';
@@ -13,8 +12,6 @@ import ArtistsList from './ArtistsList';
 import Select from '@material-ui/core/Select';
 
 const RecentlyPlayed = () => {
-  const [cookies] = useCookies(['logged_in']);
-
   // TODO - move the recently played list & track map to Context
   // const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [trackMap, setTrackMap] = useState({});
@@ -58,7 +55,7 @@ const RecentlyPlayed = () => {
         // setRecentlyPlayed(orderBy(data, 'played_at', 'desc'));
 
         // Get tracks from Spotify API
-        getTracks(cookies.access_token, trackIds, handleTrackResponse);
+        getTracks(trackIds, handleTrackResponse);
       })
       .catch(err => {
         console.log('Error calling AWS', err);
@@ -83,6 +80,7 @@ const RecentlyPlayed = () => {
     setTrackMap({ ...trackMap, ...recentlyPlayedMap });
   };
 
+  // TODO - DRY these methods up
   const getTopSongs = tracks => {
     const tracksBySong = groupBy(tracks, track => track.id);
     const songs = Object.keys(tracksBySong).sort((a, b) => {
@@ -155,6 +153,8 @@ const RecentlyPlayed = () => {
               limit={10}
             />
           </Grid>
+
+          {/*TODO - refactor these List components into a shared one*/}
           <Grid item xs={3}>
             <Typography variant="h6">Top Artists</Typography>
             <ArtistsList artists={topArtists} limit={10} />
