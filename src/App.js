@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import './App.css';
-import { Button, Container, Grid } from '@material-ui/core';
+import { Container, Grid } from '@material-ui/core';
 import {
   AuthenticationContext,
   AuthenticationProvider,
@@ -8,6 +8,7 @@ import {
 import RecentlyPlayed from './components/RecentlyPlayed';
 import { getMe } from './spotify/spotifyApi';
 import Typography from '@material-ui/core/Typography';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 const App = () => {
   const { isLoggedIn } = useContext(AuthenticationContext);
@@ -24,8 +25,9 @@ const App = () => {
       <Grid container spacing={3} justify="center">
         {!isLoggedIn ? (
           <Grid item xs={12}>
-            <Typography variant="p">User is not logged in</Typography>
-            <Button href="http://localhost:7000/login">Click to log in</Button>
+            <Typography variant="h5">
+              Logging in... <CircularProgress />
+            </Typography>
           </Grid>
         ) : (
           <>

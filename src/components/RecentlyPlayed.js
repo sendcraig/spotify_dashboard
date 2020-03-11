@@ -1,20 +1,21 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Button, Grid } from '@material-ui/core';
 import { groupBy } from 'lodash/collection';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
-import { getTracks } from '../spotify/spotifyApi';
 import TrackList from './TrackList';
 import Typography from '@material-ui/core/Typography';
 import AlbumsList from './AlbumsList';
 import ArtistsList from './ArtistsList';
 import Select from '@material-ui/core/Select';
+import {
+  TrackHistoryContext,
+  TrackHistoryProvider,
+} from '../context/TrackHistory';
 
 const RecentlyPlayed = () => {
-  // TODO - move the recently played list & track map to Context
-  // const [recentlyPlayed, setRecentlyPlayed] = useState([]);
-  const [trackMap, setTrackMap] = useState({});
+  const { trackMap, getTrackHistory } = useContext(TrackHistoryContext);
 
   const [topArtists, setTopArtists] = useState([]);
   const [topAlbums, setTopAlbums] = useState([]);
@@ -40,44 +41,22 @@ const RecentlyPlayed = () => {
   const fetchRecentlyPlayed = () => {
     const afterTimestamp =
       Date.now() - parseInt(timeRange) * getTimestampMultiplier();
-    // TODO - use axios, extract to API client file
+
     setIsLoading(true);
 
-    fetch(
-      `https://3nijghj1c7.execute-api.eu-central-1.amazonaws.com/prod/?after_timestamp=${afterTimestamp}`
-    )
-      .then(res => res.json())
-      .then(data => {
-        console.log('Successfully called AWS for play history ', data);
-        const trackIds = data.map(entry => entry.track_id);
+    const trackHistoryForTimeRange = getTrackHistory(afterTimestamp);
+    const tracksToUse = trackHistoryForTimeRange.map(
+      track => trackMap[track.track_id]
+    );
 
-        // TODO - move the recently played list to Context
-        // setRecentlyPlayed(orderBy(data, 'played_at', 'desc'));
-
-        // Get tracks from Spotify API
-        getTracks(trackIds, handleTrackResponse);
-      })
-      .catch(err => {
-        console.log('Error calling AWS', err);
-      });
+    handleTrackResponse(tracksToUse);
   };
 
   const handleTrackResponse = tracks => {
-    mapRecentlyPlayedTracks(tracks);
     getTopSongs(tracks);
     getTopArtists(tracks);
     getTopAlbums(tracks);
     setIsLoading(false);
-  };
-
-  const mapRecentlyPlayedTracks = tracks => {
-    const recentlyPlayedMap = tracks.reduce((map, obj) => {
-      map[obj.id] = obj;
-      return map;
-    }, {});
-
-    // TODO - cache this or something (don't just store in memory)
-    setTrackMap({ ...trackMap, ...recentlyPlayedMap });
   };
 
   // TODO - DRY these methods up
@@ -167,18 +146,16 @@ const RecentlyPlayed = () => {
             <Typography variant="h6">Top Genres</Typography>
             <Typography variant="body1">To-do...</Typography>
           </Grid>
-
-          {/*TODO - not sold on Victory... look into other alternatives*/}
-          {/*<Grid item xs={9}>*/}
-          {/*  <ListeningHistoryGraph*/}
-          {/*    recentlyPlayed={recentlyPlayed}*/}
-          {/*    trackMap={trackMap}*/}
-          {/*  />*/}
-          {/*</Grid>*/}
         </>
       )}
     </Grid>
   );
 };
 
-export default RecentlyPlayed;
+const RecentlyPlayedConsumer = props => (
+  <TrackHistoryProvider>
+    <RecentlyPlayed {...props} />
+  </TrackHistoryProvider>
+);
+
+export default RecentlyPlayedConsumer;
