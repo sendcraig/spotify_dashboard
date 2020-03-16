@@ -14,6 +14,7 @@ import {
   TrackHistoryProvider,
 } from '../context/TrackHistory';
 import { isEmpty } from 'lodash/lang';
+import Paper from '@material-ui/core/Paper';
 
 const RecentlyPlayed = () => {
   const { trackMap, getTrackHistory } = useContext(TrackHistoryContext);
@@ -23,12 +24,18 @@ const RecentlyPlayed = () => {
   const [topSongs, setTopSongs] = useState([]);
 
   const [timeRange, setTimeRange] = useState('5');
-  const [timeScale, setTimeScale] = useState('hour');
+  const [timeScale, setTimeScale] = useState('day');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     isEmpty(trackMap) ? setIsLoading(true) : setIsLoading(false);
   }, [trackMap]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      fetchRecentlyPlayed();
+    }
+  }, [isLoading]);
 
   const getTimestampMultiplier = () => {
     switch (timeScale) {
@@ -127,31 +134,61 @@ const RecentlyPlayed = () => {
           <Typography variant="h5">Loading play history... 🎶</Typography>
         </Grid>
       ) : (
-        <>
-          <Grid item xs={3}>
-            <Typography variant="h6">Top Tracks</Typography>
-            <TrackList
-              tracks={topSongs.map(song => {
-                return trackMap[song];
-              })}
-              limit={10}
-            />
-          </Grid>
+        <Grid item xs={12}>
+          <Grid container justify="space-evenly" spacing={3}>
+            <Grid item xs={3}>
+              <Paper>
+                <Typography
+                  variant="h6"
+                  style={{ textAlign: 'center', paddingTop: '8px' }}
+                >
+                  Top Tracks
+                </Typography>
+                <TrackList
+                  tracks={topSongs.map(song => {
+                    return trackMap[song];
+                  })}
+                  limit={10}
+                />
+              </Paper>
+            </Grid>
 
-          {/*TODO - refactor these List components into a shared one*/}
-          <Grid item xs={3}>
-            <Typography variant="h6">Top Artists</Typography>
-            <ArtistsList artists={topArtists} limit={10} />
+            {/*TODO - refactor these List components into a shared one*/}
+            <Grid item xs={3}>
+              <Paper>
+                <Typography
+                  variant="h6"
+                  style={{ textAlign: 'center', paddingTop: '8px' }}
+                >
+                  Top Artists
+                </Typography>
+                <ArtistsList artists={topArtists} limit={10} />
+              </Paper>
+            </Grid>
+            <Grid item xs={3}>
+              <Paper>
+                <Typography
+                  variant="h6"
+                  style={{ textAlign: 'center', paddingTop: '8px' }}
+                >
+                  Top Albums
+                </Typography>
+                <AlbumsList albums={topAlbums} limit={10} />
+              </Paper>
+            </Grid>
+            <Grid item xs={3}>
+              <Paper>
+                <Typography
+                  variant="h6"
+                  style={{ textAlign: 'center', paddingTop: '8px' }}
+                >
+                  Top Genres
+                </Typography>
+                <Typography variant="body1">To-do...</Typography>
+              </Paper>
+            </Grid>
           </Grid>
-          <Grid item xs={3}>
-            <Typography variant="h6">Top Albums</Typography>
-            <AlbumsList albums={topAlbums} limit={10} />
-          </Grid>
-          <Grid item xs={3}>
-            <Typography variant="h6">Top Genres</Typography>
-            <Typography variant="body1">To-do...</Typography>
-          </Grid>
-        </>
+        </Grid>
       )}
     </Grid>
   );
