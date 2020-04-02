@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@material-ui/core';
-import BarGraph from './BarGraph';
 import { groupBy } from 'lodash/collection';
+import Typography from '@material-ui/core/Typography';
 
 const ListeningHistoryGraph = ({ recentlyPlayed, trackMap }) => {
   const [graphData, setGraphData] = useState([]);
@@ -61,26 +61,13 @@ const ListeningHistoryGraph = ({ recentlyPlayed, trackMap }) => {
     setStackedGraphData(getTracksByDayByHour());
   }, [trackMap]);
 
+  console.log('graph data', graphData, 'stacked data', stackedGraphData);
+
   return (
     <>
       {graphData.length > 0 && (
         <Grid item xs={12}>
-          <BarGraph
-            data={graphData}
-            xAxis="hour"
-            yAxis="totalMinutes"
-            isStacked={false}
-          />
-        </Grid>
-      )}
-      {stackedGraphData.length > 0 && (
-        <Grid item xs={12}>
-          <BarGraph
-            data={stackedGraphData}
-            xAxis="hour"
-            yAxis="totalMinutes"
-            isStacked={true}
-          />
+          <Typography variant="h2">TODO</Typography>
         </Grid>
       )}
     </>

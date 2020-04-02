@@ -1,79 +1,33 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Button, Grid } from '@material-ui/core';
-import { groupBy } from 'lodash/collection';
-import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
-import Input from '@material-ui/core/Input';
-import TrackList from './TrackList';
+import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import { Grid } from '@material-ui/core';
+import TopList from './TopList';
 import Typography from '@material-ui/core/Typography';
-import AlbumsList from './AlbumsList';
-import ArtistsList from './ArtistsList';
-import Select from '@material-ui/core/Select';
-import {
-  TrackHistoryContext,
-  TrackHistoryProvider,
-} from '../context/TrackHistory';
-import { isEmpty } from 'lodash/lang';
 import Paper from '@material-ui/core/Paper';
+import { groupBy } from 'lodash/collection';
 
-const RecentlyPlayed = () => {
-  const { trackMap, getTrackHistory } = useContext(TrackHistoryContext);
-
+const RecentlyPlayed = ({ tracks }) => {
   const [topArtists, setTopArtists] = useState([]);
   const [topAlbums, setTopAlbums] = useState([]);
   const [topSongs, setTopSongs] = useState([]);
 
-  const [timeRange, setTimeRange] = useState('5');
-  const [timeScale, setTimeScale] = useState('day');
-  const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
-    isEmpty(trackMap) ? setIsLoading(true) : setIsLoading(false);
-  }, [trackMap]);
-
-  useEffect(() => {
-    if (!isLoading) {
-      fetchRecentlyPlayed();
-    }
-  }, [isLoading]);
-
-  const getTimestampMultiplier = () => {
-    switch (timeScale) {
-      case 'hour':
-        return 3600000;
-      case 'day':
-        return 3600000 * 24;
-      case 'week':
-        return 3600000 * 24 * 7;
-      case 'month':
-        return 3600000 * 24 * 7 * 4;
-    }
-  };
-
-  const fetchRecentlyPlayed = () => {
-    setIsLoading(true);
-
-    const afterTimestamp =
-      Date.now() - parseInt(timeRange) * getTimestampMultiplier();
-    const trackHistoryForTimeRange = getTrackHistory(afterTimestamp);
-
-    const tracksToUse = trackHistoryForTimeRange.map(
-      track => trackMap[track.track_id]
-    );
-    getTopSongs(tracksToUse);
-    getTopArtists(tracksToUse);
-    getTopAlbums(tracksToUse);
-
-    setIsLoading(false);
-  };
+    getTopSongs(tracks);
+    getTopArtists(tracks);
+    getTopAlbums(tracks);
+  }, []);
 
   // TODO - DRY these methods up
   const getTopSongs = tracks => {
     const tracksBySong = groupBy(tracks, track => track.id);
-    const songs = Object.keys(tracksBySong).sort((a, b) => {
+    let songs = Object.keys(tracksBySong).sort((a, b) => {
       return tracksBySong[b].length - tracksBySong[a].length;
     });
+    songs = songs.map(song => {
+      return tracksBySong[song][0];
+    });
 
+    console.log('top songs', songs);
     setTopSongs(songs);
   };
 
@@ -83,6 +37,7 @@ const RecentlyPlayed = () => {
       return tracksByArtist[b].length - tracksByArtist[a].length;
     });
 
+    console.log('top artists', artists);
     setTopArtists(artists);
   };
 
@@ -95,109 +50,84 @@ const RecentlyPlayed = () => {
       return tracksByAlbum[album][0].album;
     });
 
+    console.log('top albums', albums);
     setTopAlbums(albums);
   };
 
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
-        <FormControl>
-          {/*TODO - change time range to slider or select*/}
-          <InputLabel htmlFor="time-range">Time range</InputLabel>
-          <Input
-            id="time-range"
-            value={timeRange}
-            onChange={event => setTimeRange(event.target.value)}
-          />
-        </FormControl>
-        <FormControl>
-          <InputLabel htmlFor="time-scale">Time scale</InputLabel>
-          <Select
-            native
-            value={timeScale}
-            onChange={event => setTimeScale(event.target.value)}
-          >
-            <option value="hour">Hours</option>
-            <option value="day">Days</option>
-            <option value="week">Weeks</option>
-            <option value="month">Months</option>
-          </Select>
-        </FormControl>
+        <Grid container justify="space-evenly" spacing={3}>
+          <Grid item xs={3}>
+            <Paper>
+              <Typography
+                variant="h6"
+                style={{ textAlign: 'center', paddingTop: '8px' }}
+              >
+                Top Tracks
+              </Typography>
+              <TopList
+                data={topSongs}
+                imageAccessor={song => song.album.images[0].url}
+                primaryTextAccessor={song => song.name}
+                secondaryTextAccessor={song => song.artists[0].name}
+                limit={10}
+              />
+            </Paper>
+          </Grid>
 
-        <Button onClick={fetchRecentlyPlayed}>
-          Get recently played tracks
-        </Button>
-      </Grid>
-
-      {isLoading ? (
-        <Grid item xs={12} alignItems="center">
-          <Typography variant="h5">Loading play history... 🎶</Typography>
-        </Grid>
-      ) : (
-        <Grid item xs={12}>
-          <Grid container justify="space-evenly" spacing={3}>
-            <Grid item xs={3}>
-              <Paper>
-                <Typography
-                  variant="h6"
-                  style={{ textAlign: 'center', paddingTop: '8px' }}
-                >
-                  Top Tracks
-                </Typography>
-                <TrackList
-                  tracks={topSongs.map(song => {
-                    return trackMap[song];
-                  })}
-                  limit={10}
-                />
-              </Paper>
-            </Grid>
-
-            {/*TODO - refactor these List components into a shared one*/}
-            <Grid item xs={3}>
-              <Paper>
-                <Typography
-                  variant="h6"
-                  style={{ textAlign: 'center', paddingTop: '8px' }}
-                >
-                  Top Artists
-                </Typography>
-                <ArtistsList artists={topArtists} limit={10} />
-              </Paper>
-            </Grid>
-            <Grid item xs={3}>
-              <Paper>
-                <Typography
-                  variant="h6"
-                  style={{ textAlign: 'center', paddingTop: '8px' }}
-                >
-                  Top Albums
-                </Typography>
-                <AlbumsList albums={topAlbums} limit={10} />
-              </Paper>
-            </Grid>
-            <Grid item xs={3}>
-              <Paper>
-                <Typography
-                  variant="h6"
-                  style={{ textAlign: 'center', paddingTop: '8px' }}
-                >
-                  Top Genres
-                </Typography>
-                <Typography variant="body1">To-do...</Typography>
-              </Paper>
-            </Grid>
+          {/*TODO - refactor these List components into a shared one*/}
+          <Grid item xs={3}>
+            <Paper>
+              <Typography
+                variant="h6"
+                style={{ textAlign: 'center', paddingTop: '8px' }}
+              >
+                Top Artists
+              </Typography>
+              <TopList
+                data={topArtists}
+                primaryTextAccessor={artist => artist}
+                limit={10}
+              />
+            </Paper>
+          </Grid>
+          <Grid item xs={3}>
+            <Paper>
+              <Typography
+                variant="h6"
+                style={{ textAlign: 'center', paddingTop: '8px' }}
+              >
+                Top Albums
+              </Typography>
+              <TopList
+                data={topAlbums}
+                imageAccessor={album => album.images[0].url}
+                primaryTextAccessor={album => album.name}
+                secondaryTextAccessor={album => album.artists[0].name}
+                limit={10}
+              />
+            </Paper>
+          </Grid>
+          <Grid item xs={3}>
+            <Paper>
+              <Typography
+                variant="h6"
+                style={{ textAlign: 'center', paddingTop: '8px' }}
+              >
+                Top Genres
+              </Typography>
+              <Typography variant="body1">To-do...</Typography>
+            </Paper>
           </Grid>
         </Grid>
-      )}
+      </Grid>
     </Grid>
   );
 };
 
-const RecentlyPlayedConsumer = props => (
-  <TrackHistoryProvider>
-    <RecentlyPlayed {...props} />
-  </TrackHistoryProvider>
-);
+RecentlyPlayed.propTypes = {
+  tracks: PropTypes.array.isRequired,
+};
 
-export default RecentlyPlayedConsumer;
+export default RecentlyPlayed;

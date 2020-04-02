@@ -16,8 +16,6 @@ const TrackHistoryProvider = props => {
         'https://3nijghj1c7.execute-api.eu-central-1.amazonaws.com/prod/?after_timestamp=1'
       )
       .then(response => {
-        console.log('Successfully called AWS for play history ', response);
-
         const trackIds = response.data.map(entry => entry.track_id);
         setTrackHistory(orderBy(response.data, 'played_at', 'desc'));
 
