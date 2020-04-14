@@ -9,7 +9,7 @@ import {
 import { isEmpty } from 'lodash/lang';
 import {
   CartesianGrid,
-  Legend,
+  Label,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -17,10 +17,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import Paper from '@material-ui/core/Paper';
+import { MONTHS } from '../util';
 
 const ListeningHistoryGraph = ({ tracks }) => {
-  console.log('loading graph with tracks:', tracks.length);
   const { trackMap } = useContext(TrackHistoryContext);
 
   const [graphData, setGraphData] = useState([]);
@@ -32,6 +31,7 @@ const ListeningHistoryGraph = ({ tracks }) => {
   }, [trackMap, tracks]);
 
   const formatGraphData = () => {
+    // TODO - group by different time ranges
     const tracksByDay = groupBy(tracks, track => {
       const date = new Date(track.played_at);
       return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
@@ -39,6 +39,7 @@ const ListeningHistoryGraph = ({ tracks }) => {
 
     let graphTracks = [];
     Object.keys(tracksByDay).forEach(day => {
+      // Add different metrics
       const minsPerDay = tracksByDay[day].reduce(
         (a, b) => (a += trackMap[b.track_id].duration_ms / 60000),
         0
@@ -50,6 +51,7 @@ const ListeningHistoryGraph = ({ tracks }) => {
           0
         ) / tracksByDay[day].length;
 
+      // Then push onto graph data
       graphTracks.push({
         day: day,
         minutes: minsPerDay,
@@ -61,30 +63,44 @@ const ListeningHistoryGraph = ({ tracks }) => {
     setGraphData(graphTracks);
   };
 
+  const formatDateTick = dateString => {
+    const [day, month] = dateString.split('-');
+    return `${MONTHS[month - 1]} ${day}`;
+  };
+
   return (
     <Grid container>
       {graphData.length > 0 && (
         <Grid item xs={12}>
-          <Paper style={{ display: 'flex', height: 400 }}>
-            <ResponsiveContainer>
-              <LineChart
-                data={graphData}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart
+              data={graphData}
+              margin={{ top: 5, right: 30, left: 20, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="day"
+                tickFormatter={val => formatDateTick(val)}
+                interval={Math.floor(graphData.length / 5)}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="minutes" stroke="#8884d8" />
-                <Line
-                  type="monotone"
-                  dataKey="avg popularity"
-                  stroke="#82ca9d"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Paper>
+                <Label position="bottom" style={{ textAnchor: 'middle' }}>
+                  Day
+                </Label>
+              </XAxis>
+              <YAxis>
+                <Label
+                  angle={270}
+                  position="left"
+                  style={{ textAnchor: 'middle' }}
+                >
+                  Value
+                </Label>
+              </YAxis>
+              <Tooltip />
+              <Line type="monotone" dataKey="minutes" stroke="#8884d8" />
+              <Line type="monotone" dataKey="avg popularity" stroke="#82ca9d" />
+            </LineChart>
+          </ResponsiveContainer>
         </Grid>
       )}
     </Grid>

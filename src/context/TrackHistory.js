@@ -17,7 +17,7 @@ const TrackHistoryProvider = props => {
       )
       .then(response => {
         const trackIds = response.data.map(entry => entry.track_id);
-        setTrackHistory(orderBy(response.data, 'played_at', 'desc'));
+        setTrackHistory(orderBy(response.data, 'played_at', 'asc'));
 
         // Get tracks from Spotify API
         getTracks(trackIds, mapRecentlyPlayedTracks);

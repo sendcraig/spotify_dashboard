@@ -61,8 +61,6 @@ const App = () => {
     setIsLoading(false);
   };
 
-  console.log('USING TRACKS', tracksToUse);
-
   return (
     <Container>
       <Grid container spacing={3} justify="center">

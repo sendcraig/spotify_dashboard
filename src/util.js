@@ -10,3 +10,18 @@ export const getTimestampMultiplier = timeScale => {
       return 3600000 * 24 * 7 * 4;
   }
 };
+
+export const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
