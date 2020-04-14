@@ -1,11 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@material-ui/core';
 import { groupBy } from 'lodash/collection';
-import {
-  TrackHistoryContext,
-  TrackHistoryProvider,
-} from '../context/TrackHistory';
 import { isEmpty } from 'lodash/lang';
 import {
   CartesianGrid,
@@ -19,9 +15,7 @@ import {
 } from 'recharts';
 import { MONTHS } from '../util';
 
-const ListeningHistoryGraph = ({ tracks }) => {
-  const { trackMap } = useContext(TrackHistoryContext);
-
+const ListeningHistoryGraph = ({ tracks, trackMap }) => {
   const [graphData, setGraphData] = useState([]);
 
   useEffect(() => {
@@ -109,12 +103,7 @@ const ListeningHistoryGraph = ({ tracks }) => {
 
 ListeningHistoryGraph.propTypes = {
   tracks: PropTypes.array.isRequired,
+  trackMap: PropTypes.object.isRequired,
 };
 
-const ListeningHistoryGraphConsumer = props => (
-  <TrackHistoryProvider>
-    <ListeningHistoryGraph {...props} />
-  </TrackHistoryProvider>
-);
-
-export default ListeningHistoryGraphConsumer;
+export default ListeningHistoryGraph;

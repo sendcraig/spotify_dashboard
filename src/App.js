@@ -25,7 +25,9 @@ const App = () => {
   const { isLoggedIn } = useContext(AuthenticationContext);
   const [currentUser, setCurrentUser] = useState({});
 
-  const { trackMap, getTrackHistory } = useContext(TrackHistoryContext);
+  const { trackMap, artistMap, getTrackHistory } = useContext(
+    TrackHistoryContext
+  );
   const [tracksToUse, setTracksToUse] = useState([]);
   const [trackHistoryToUse, setTrackHistoryToUse] = useState([]);
 
@@ -40,10 +42,10 @@ const App = () => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (!isEmpty(trackMap)) {
+    if (!isEmpty(trackMap) && !isEmpty(artistMap)) {
       fetchRecentlyPlayed();
     }
-  }, [trackMap]);
+  }, [trackMap, artistMap]);
 
   const fetchRecentlyPlayed = () => {
     setIsLoading(true);
@@ -112,11 +114,14 @@ const App = () => {
               <>
                 <Grid item xs={12}>
                   <Typography variant="h3">Graph</Typography>
-                  <ListeningHistoryGraph tracks={trackHistoryToUse} />
+                  <ListeningHistoryGraph
+                    tracks={trackHistoryToUse}
+                    trackMap={trackMap}
+                  />
                 </Grid>
                 <Grid item xs={12}>
                   <Typography variant="h3">Favorites</Typography>
-                  <RecentlyPlayed tracks={tracksToUse} />
+                  <RecentlyPlayed tracks={tracksToUse} artistMap={artistMap} />
                 </Grid>
               </>
             )}

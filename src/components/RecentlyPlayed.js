@@ -6,8 +6,7 @@ import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 import { groupBy } from 'lodash/collection';
 
-const RecentlyPlayed = ({ tracks }) => {
-  // console.log('RECENTLY PLAYED TRACKS', tracks);
+const RecentlyPlayed = ({ tracks, artistMap }) => {
   const [topArtists, setTopArtists] = useState([]);
   const [topAlbums, setTopAlbums] = useState([]);
   const [topSongs, setTopSongs] = useState([]);
@@ -33,10 +32,11 @@ const RecentlyPlayed = ({ tracks }) => {
   };
 
   const getTopArtists = tracks => {
-    const tracksByArtist = groupBy(tracks, track => track.artists[0].name);
-    const artists = Object.keys(tracksByArtist).sort((a, b) => {
+    const tracksByArtist = groupBy(tracks, track => track.artists[0].id);
+    let artists = Object.keys(tracksByArtist).sort((a, b) => {
       return tracksByArtist[b].length - tracksByArtist[a].length;
     });
+    artists = artists.map(artist => artistMap[artist]);
 
     // console.log('top artists', artists);
     setTopArtists(artists);
@@ -69,7 +69,7 @@ const RecentlyPlayed = ({ tracks }) => {
               </Typography>
               <TopList
                 data={topSongs}
-                imageAccessor={song => song.album.images[0].url}
+                imageAccessor={song => song.album.images[2].url}
                 primaryTextAccessor={song => song.name}
                 secondaryTextAccessor={song => song.artists[0].name}
                 limit={10}
@@ -87,7 +87,8 @@ const RecentlyPlayed = ({ tracks }) => {
               </Typography>
               <TopList
                 data={topArtists}
-                primaryTextAccessor={artist => artist}
+                primaryTextAccessor={artist => artist.name}
+                imageAccessor={artist => artist.images[2].url}
                 limit={10}
               />
             </Paper>
@@ -102,7 +103,7 @@ const RecentlyPlayed = ({ tracks }) => {
               </Typography>
               <TopList
                 data={topAlbums}
-                imageAccessor={album => album.images[0].url}
+                imageAccessor={album => album.images[2].url}
                 primaryTextAccessor={album => album.name}
                 secondaryTextAccessor={album => album.artists[0].name}
                 limit={10}
@@ -128,6 +129,7 @@ const RecentlyPlayed = ({ tracks }) => {
 
 RecentlyPlayed.propTypes = {
   tracks: PropTypes.array.isRequired,
+  artistMap: PropTypes.object.isRequired,
 };
 
 export default RecentlyPlayed;

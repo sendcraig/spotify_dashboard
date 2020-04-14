@@ -183,5 +183,45 @@ server.get('/tracks', (req, res) => {
   }
 });
 
+/**
+ * Get batch of artists by IDs. Artists are cached in memory by ID.
+ * https://developer.spotify.com/documentation/web-api/reference/artists/get-several-artists/
+ */
+server.get('/artists', (req, res) => {
+  const artistIds = req.query.artistIds;
+  let cachedArtists = [];
+  let nonCachedArtists = [];
+
+  // Check if tracks are cached
+  artistIds.forEach(artistId => {
+    if (cache.get(artistId)) {
+      cachedArtists.push(cache.get(artistId));
+    } else {
+      nonCachedArtists.push(artistId);
+    }
+  });
+
+  if (nonCachedArtists.length > 0) {
+    const access_token = cache.get('access_token');
+    const options = {
+      url: `https://api.spotify.com/v1/artists/?ids=${nonCachedArtists}`,
+      headers: { Authorization: 'Bearer ' + access_token },
+      json: true,
+    };
+
+    // Make request to Spotify
+    request.get(options, function(error, response, body) {
+      if (error) {
+        console.log('error getting arttists', error);
+      }
+
+      body.artists.forEach(track => cache.put(track.id, track));
+      res.json(body.artists.concat(cachedArtists));
+    });
+  } else {
+    res.json(cachedArtists);
+  }
+});
+
 //set port and log to the console
 server.listen(7000, () => console.log('server listening'));

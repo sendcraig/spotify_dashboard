@@ -21,11 +21,11 @@ export const getMe = callback => {
  * @param callback
  */
 export const getTracks = (trackIds, callback) => {
-  const makeRequest = (trackIdChunks, retrievedTracks) => {
+  const makeRequest = (artistIdChunks, retrievedTracks) => {
     axios
       .get('http://localhost:7000/tracks', {
         params: {
-          trackIds: trackIdChunks.shift(),
+          trackIds: artistIdChunks.shift(),
         },
         paramsSerializer: params => {
           return qs.stringify(params, { arrayFormat: 'brackets' });
@@ -35,8 +35,8 @@ export const getTracks = (trackIds, callback) => {
         const allTracks = retrievedTracks.concat(response.data);
 
         // Recursive loop for pagination
-        if (trackIdChunks.length > 0) {
-          makeRequest(trackIdChunks, allTracks);
+        if (artistIdChunks.length > 0) {
+          makeRequest(artistIdChunks, allTracks);
         } else {
           console.log('Successfully got tracks from Spotify: ', allTracks);
           callback(allTracks);
@@ -46,5 +46,41 @@ export const getTracks = (trackIds, callback) => {
 
   // Spotify limits batch calls to 50 tracks at a time
   const chunks = chunk(trackIds, 50);
+  makeRequest(chunks, []);
+};
+
+/**
+ * Get batch of artists from Spotify API.
+ * Method is exhaustive and uses pagination to make as many requests as
+ * necessary.
+ * @param artistIds
+ * @param callback
+ */
+export const getArtists = (artistIds, callback) => {
+  const makeRequest = (artistIdChunks, retrievedArtists) => {
+    axios
+      .get('http://localhost:7000/artists', {
+        params: {
+          artistIds: artistIdChunks.shift(),
+        },
+        paramsSerializer: params => {
+          return qs.stringify(params, { arrayFormat: 'brackets' });
+        },
+      })
+      .then(response => {
+        const allArtists = retrievedArtists.concat(response.data);
+
+        // Recursive loop for pagination
+        if (artistIdChunks.length > 0) {
+          makeRequest(artistIdChunks, allArtists);
+        } else {
+          console.log('Successfully got artists from Spotify: ', allArtists);
+          callback(allArtists);
+        }
+      });
+  };
+
+  // Spotify limits batch calls to 50 artists at a time
+  const chunks = chunk(artistIds, 50);
   makeRequest(chunks, []);
 };

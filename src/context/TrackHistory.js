@@ -1,14 +1,16 @@
 import React, { createContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { getTracks } from '../spotify/spotifyApi';
+import { getArtists, getTracks } from '../spotify/spotifyApi';
 import axios from 'axios';
 import { orderBy } from 'lodash/collection';
+import { isEmpty } from 'lodash/lang';
 
 const TrackHistoryContext = createContext({});
 
 const TrackHistoryProvider = props => {
   const [trackHistory, setTrackHistory] = useState([]);
   const [trackMap, setTrackMap] = useState({});
+  const [artistMap, setArtistMap] = useState({});
 
   useEffect(() => {
     axios
@@ -24,6 +26,22 @@ const TrackHistoryProvider = props => {
       });
   }, []);
 
+  useEffect(() => {
+    if (!isEmpty(trackMap) && isEmpty(artistMap)) {
+      const artistIds = {};
+      Object.values(trackMap).forEach(val =>
+        artistIds[val.artists[0].id]
+          ? artistIds[val.artists[0].id]++
+          : (artistIds[val.artists[0].id] = 1)
+      );
+
+      console.log('ARTISTS TO FETCH', artistIds);
+
+      // Get artists from Spotify API
+      getArtists(Object.keys(artistIds), mapArtists);
+    }
+  }, [trackMap]);
+
   const mapRecentlyPlayedTracks = tracks => {
     const recentlyPlayedMap = tracks.reduce((map, obj) => {
       map[obj.id] = obj;
@@ -31,6 +49,16 @@ const TrackHistoryProvider = props => {
     }, {});
 
     setTrackMap({ ...trackMap, ...recentlyPlayedMap });
+  };
+
+  const mapArtists = artists => {
+    const spotifyArtistMap = artists.reduce((map, obj) => {
+      map[obj.id] = obj;
+      return map;
+    }, {});
+
+    console.log('ARTIST MAP', spotifyArtistMap);
+    setArtistMap({ ...artistMap, ...spotifyArtistMap });
   };
 
   const getTrackHistory = afterTimestamp => {
@@ -42,6 +70,7 @@ const TrackHistoryProvider = props => {
       value={{
         trackHistory,
         trackMap,
+        artistMap,
         getTrackHistory,
       }}
     >
