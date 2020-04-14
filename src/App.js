@@ -19,17 +19,18 @@ import InputLabel from '@material-ui/core/InputLabel';
 import Input from '@material-ui/core/Input';
 import Select from '@material-ui/core/Select';
 import { getTimestampMultiplier } from './util';
+import ListeningHistoryGraph from './components/ListeningHistoryGraph';
 
 const App = () => {
   const { isLoggedIn } = useContext(AuthenticationContext);
   const [currentUser, setCurrentUser] = useState({});
 
   const { trackMap, getTrackHistory } = useContext(TrackHistoryContext);
-
   const [tracksToUse, setTracksToUse] = useState([]);
+  const [trackHistoryToUse, setTrackHistoryToUse] = useState([]);
 
   const [timeRange, setTimeRange] = useState('5');
-  const [timeScale, setTimeScale] = useState('day');
+  const [timeScale, setTimeScale] = useState('week');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -56,8 +57,11 @@ const App = () => {
     );
 
     setTracksToUse(tracks);
+    setTrackHistoryToUse(trackHistoryForTimeRange);
     setIsLoading(false);
   };
+
+  console.log('USING TRACKS', tracksToUse);
 
   return (
     <Container>
@@ -77,7 +81,6 @@ const App = () => {
             </Grid>
             <Grid item xs={12}>
               <FormControl>
-                {/*TODO - change time range to slider or select*/}
                 <InputLabel htmlFor="time-range">Time range</InputLabel>
                 <Input
                   id="time-range"
@@ -92,7 +95,6 @@ const App = () => {
                   value={timeScale}
                   onChange={event => setTimeScale(event.target.value)}
                 >
-                  <option value="hour">Hours</option>
                   <option value="day">Days</option>
                   <option value="week">Weeks</option>
                   <option value="month">Months</option>
@@ -111,12 +113,12 @@ const App = () => {
             ) : (
               <>
                 <Grid item xs={12}>
-                  <Typography variant="h3">Favorites</Typography>
-                  <RecentlyPlayed tracks={tracksToUse} />
+                  <Typography variant="h3">Graph</Typography>
+                  <ListeningHistoryGraph tracks={trackHistoryToUse} />
                 </Grid>
                 <Grid item xs={12}>
-                  <Typography variant="h3">Graph</Typography>
-                  <Typography variant="h5">TODO</Typography>
+                  <Typography variant="h3">Favorites</Typography>
+                  <RecentlyPlayed tracks={tracksToUse} />
                 </Grid>
               </>
             )}

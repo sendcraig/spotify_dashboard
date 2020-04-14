@@ -7,6 +7,7 @@ import Paper from '@material-ui/core/Paper';
 import { groupBy } from 'lodash/collection';
 
 const RecentlyPlayed = ({ tracks }) => {
+  // console.log('RECENTLY PLAYED TRACKS', tracks);
   const [topArtists, setTopArtists] = useState([]);
   const [topAlbums, setTopAlbums] = useState([]);
   const [topSongs, setTopSongs] = useState([]);
@@ -15,7 +16,7 @@ const RecentlyPlayed = ({ tracks }) => {
     getTopSongs(tracks);
     getTopArtists(tracks);
     getTopAlbums(tracks);
-  }, []);
+  }, [tracks]);
 
   // TODO - DRY these methods up
   const getTopSongs = tracks => {
@@ -27,7 +28,7 @@ const RecentlyPlayed = ({ tracks }) => {
       return tracksBySong[song][0];
     });
 
-    console.log('top songs', songs);
+    // console.log('top songs', songs);
     setTopSongs(songs);
   };
 
@@ -37,7 +38,7 @@ const RecentlyPlayed = ({ tracks }) => {
       return tracksByArtist[b].length - tracksByArtist[a].length;
     });
 
-    console.log('top artists', artists);
+    // console.log('top artists', artists);
     setTopArtists(artists);
   };
 
@@ -50,7 +51,7 @@ const RecentlyPlayed = ({ tracks }) => {
       return tracksByAlbum[album][0].album;
     });
 
-    console.log('top albums', albums);
+    // console.log('top albums', albums);
     setTopAlbums(albums);
   };
 
@@ -76,7 +77,6 @@ const RecentlyPlayed = ({ tracks }) => {
             </Paper>
           </Grid>
 
-          {/*TODO - refactor these List components into a shared one*/}
           <Grid item xs={3}>
             <Paper>
               <Typography

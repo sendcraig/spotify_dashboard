@@ -24,6 +24,7 @@
     "react-dom": "^16.12.0",
     "react-router-dom": "^5.1.2",
     "react-spotify-login": "^0.9.1",
+    "recharts": "^1.8.5",
     "request": "^2.88.2",
     "spotify-web-api-js": "^1.2.0",
     "typeface-roboto": "0.0.75",
