@@ -4,17 +4,19 @@ import { Grid } from '@material-ui/core';
 import TopList from './TopList';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import { groupBy } from 'lodash/collection';
+import { countBy, groupBy } from 'lodash/collection';
 
 const RecentlyPlayed = ({ tracks, artistMap }) => {
   const [topArtists, setTopArtists] = useState([]);
   const [topAlbums, setTopAlbums] = useState([]);
   const [topSongs, setTopSongs] = useState([]);
+  const [topGenres, setTopGenres] = useState([]);
 
   useEffect(() => {
     getTopSongs(tracks);
     getTopArtists(tracks);
     getTopAlbums(tracks);
+    getTopGenres(tracks);
   }, [tracks]);
 
   // TODO - DRY these methods up
@@ -53,6 +55,20 @@ const RecentlyPlayed = ({ tracks, artistMap }) => {
 
     // console.log('top albums', albums);
     setTopAlbums(albums);
+  };
+
+  const getTopGenres = tracks => {
+    const genres = tracks.reduce((a, b) => {
+      return a.concat(artistMap[b.artists[0].id].genres);
+    }, []);
+
+    let topGenres = countBy(genres);
+    topGenres = Object.keys(topGenres).sort((a, b) => {
+      return topGenres[b] - topGenres[a];
+    });
+
+    // console.log("TOP GENRES", topGenres);
+    setTopGenres(topGenres);
   };
 
   return (
@@ -118,7 +134,11 @@ const RecentlyPlayed = ({ tracks, artistMap }) => {
               >
                 Top Genres
               </Typography>
-              <Typography variant="body1">To-do...</Typography>
+              <TopList
+                data={topGenres}
+                primaryTextAccessor={genre => genre}
+                limit={10}
+              />
             </Paper>
           </Grid>
         </Grid>
